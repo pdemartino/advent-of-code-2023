@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+SCRIPT_PATH=$(realpath $(dirname "$0"))
 
 function missing_main_error_and_exit {
     echo "Main file '${1}' not found"
@@ -7,18 +8,19 @@ function missing_main_error_and_exit {
 
 
 if [ $# -lt 1 ]; then
-    echo "Usage: run.sh <day>/<language>[/<variation>] [-d|--debug] [-i=<input_file>|--input=<input_file>]"
+    echo "Usage: run.sh <language>/<day>[/<variation>] [-d|--debug] [-i=<input_file>|--input=<input_file>]"
     exit 1
 fi
 
+code_dir="$1"
 # Extract Day of Advent and language from first parameter, by spltting path by /
 IFS='/' read -r -a array <<< "${1}"
-day=${array[0]}
-language=${array[1]}
+language=${array[0]}
+day=${array[1]}
 
 # Define defaults for optional parameters
 debug=false
-input_file="${day}/input"
+input_file="$SCRIPT_PATH/problems/${day}/input"
 
 # Extract all the optional parameters starting from the 3rd one (index 2)
 for i in "${@:2}"
@@ -50,7 +52,7 @@ case $language in
         ;;
     "js")
         # Extract main file according to convention
-        main="${1}/index.js"
+        main="${code_dir}/index.js"
         [ ! -f "$main" ] && missing_main_error_and_exit "$main"
         
         node_params=""
