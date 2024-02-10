@@ -14,36 +14,43 @@ const config = {
 
 function lineToGame(line) {
     
-    //Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
-    // line is a string, split it on first : occurrence
-    let parts = line.split(':');
-    let gameId = parseInt(parts[0].split(' ')[1]);
-    
-    let gameSets = parts[1].split(';'); // ["3 blue, 4 red", "1 red, 2 green, 6 blue", "2 green"]
+    // line = "Game <gameId>: <gameSet1>; <gameSet2>; <gameSet3>; ...; <gameSetN>"
+    // where gameSet = "<count> <color>, <count> <color>, ... <count> <color>"
+    // Each set can have a number of dices of each color, I'll take the max of each color
+
+    const lineParts = line.split(':');
+    const gameId = parseInt(lineParts[0].split(' ')[1]);
+    const gameSets = lineParts[1].split(';'); // eg: ["3 blue, 4 red", "1 red, 2 green, 6 blue", "2 green"]
 
     let max = {
         red: 0,
         green: 0,
         blue: 0
     }
-    for (var i = 0; i < gameSets.length; i++) {
-        let gameSet = gameSets[i].trim();
-        let colors = gameSet.split(',');
-        for (var j = 0; j < colors.length; j++) {
-            let colorParts = colors[j].trim().split(' ');
-            let colorName = colorParts[1];
-            let colorCount = parseInt(colorParts[0]);
-            if (colorCount > max[colorName]) {
-                max[colorName] = colorCount;
+
+    gameSets
+        .flatMap(gameSet => gameSet.split(','))
+        .map(colorInstance => {
+            let colorParts = colorInstance.trim().split(' ');
+            return {
+                color: colorParts[1],
+                count: parseInt(colorParts[0])
             }
-        }
-    }
+        }).forEach(colorInstance => {
+            max[colorInstance.color] = Math.max(max[colorInstance.color], colorInstance.count);
+        });
 
     return {
         id: gameId,
         max: max
     }
 }
+
+const linesToSum = (lines) => lines
+    .map(line => lineToGame(line))
+    .filter(game => (game.max.red <= config.red.max && game.max.green <= config.green.max && game.max.blue <= config.blue.max ))
+    .map(game => game.id)
+    .reduce((acc, val) => acc + val, 0);
 
 (function main() {
 
@@ -52,19 +59,7 @@ function lineToGame(line) {
 
     fs.readFile(inputFile, 'utf8', function(err, data) {
         if (err) throw err;
-        var lines = data.trim().split('\n');
-
-        const sum = lines.map(function(line) {
-            return lineToGame(line);
-        }).filter(function(game) {
-            return game.max.red <= config.red.max && game.max.green <= config.green.max && game.max.blue <= config.blue.max;
-        }).map(function(game) {
-            return game.id;
-        }).reduce(function(acc, val) {
-            return acc + val;
-        }, 0);
-
-        console.log(sum);
+        console.log(linesToSum(data.trim().split('\n')));
     });
     
 })();
