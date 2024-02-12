@@ -51,14 +51,10 @@ case $language in
         java $day
         ;;
     "js")
-        # Extract main file according to convention
+        engine="node"
         main="${code_dir}/index.js"
-        [ ! -f "$main" ] && missing_main_error_and_exit "$main"
-        
-        node_params=""
-        [ $debug == true ] && node_params="--inspect-brk"
-
-        node $node_params "${1}/index.js" "$input_file"
+        engine_params=""
+        [ $debug == true ] && engine_params="$engine_params --inspect-brk"
         ;;
     "kt")
         echo "Kotlin TODO"
@@ -72,5 +68,8 @@ case $language in
 esac
 
 
-
+command="$engine $engine_params $main $input_file"
+[ ! -f "$main" ] && missing_main_error_and_exit "$main"
+echo "Run: $command"
+$command
 
